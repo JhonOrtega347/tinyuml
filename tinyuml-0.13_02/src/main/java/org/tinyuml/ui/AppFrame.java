@@ -80,6 +80,7 @@ implements EditorStateListener, AppCommandListener, SelectionListener {
   private JTabbedPane tabbedPane;
   private JLabel coordLabel = new JLabel("    ");
   private JLabel memLabel = new JLabel("    ");
+  private JLabel itemCountLabel = new JLabel();
   private UmlModel umlModel;
   private DiagramEditor currentEditor;
   private transient Timer timer = new Timer();
@@ -203,6 +204,7 @@ implements EditorStateListener, AppCommandListener, SelectionListener {
     staticToolbarManager = new StaticStructureEditorToolbarManager();
     JToolBar toolbar = staticToolbarManager.getToolbar();
     staticToolbarManager.addCommandListener(editorDispatcher);
+    updateItemCount();
     editorPanel.add(spane, BorderLayout.CENTER);
     editorPanel.add(toolbar, BorderLayout.NORTH);
     final Component comp = tabbedPane.add(diagram.getLabelText(), editorPanel);
@@ -241,10 +243,27 @@ implements EditorStateListener, AppCommandListener, SelectionListener {
   private void installStatusbar() {
     JPanel statusbar = new JPanel(new BorderLayout());
     statusbar.add(coordLabel, BorderLayout.WEST);
+    statusbar.add(itemCountLabel, BorderLayout.CENTER);
     statusbar.add(memLabel, BorderLayout.EAST);
     getContentPane().add(statusbar, BorderLayout.SOUTH);
   }
 
+  /**
+   * Updates the item counts shown for the current diagram.
+   */
+  private void updateItemCount() {
+    if (currentEditor == null) {
+      itemCountLabel.setText("Total Items: 00 | Package: 00 | Class: 00 | "
+        + "Component: 00 | Note: 00");
+      return;
+    }
+    StructureDiagram.ItemCounts counts =
+      currentEditor.getDiagram().getItemCounts();
+    itemCountLabel.setText(String.format(
+      "Total Items: %02d | Package: %02d | Class: %02d | Component: %02d | "
+      + "Note: %02d", counts.getTotal(), counts.getPackages(),
+      counts.getClasses(), counts.getComponents(), counts.getNotes()));
+  }
   /**
    * Returns the specified resource as a String object.
    * @param property the property name
@@ -284,6 +303,7 @@ implements EditorStateListener, AppCommandListener, SelectionListener {
     // spring loading is implemented here
     staticToolbarManager.doClick("SELECT_MODE");
     updateMenuAndToolbars(editor);
+    updateItemCount();
   }
 
   /**
@@ -291,6 +311,7 @@ implements EditorStateListener, AppCommandListener, SelectionListener {
    */
   public void elementRemoved(DiagramEditor editor) {
     updateMenuAndToolbars(editor);
+    updateItemCount();
   }
 
   /**
@@ -629,7 +650,7 @@ implements EditorStateListener, AppCommandListener, SelectionListener {
 	  if(hasSelection)
 	    lastCopiedElements = getCurrentEditor().getSelectedElements();
 
-	  //adicionalmente, hay que habilitar el botón PASTE!
+	  //adicionalmente, hay que habilitar el botï¿½n PASTE!
 	  menumanager.enableMenuItem("PASTE", hasSelection);
 	  toolbarmanager.enableButton("PASTE", hasSelection);
   }

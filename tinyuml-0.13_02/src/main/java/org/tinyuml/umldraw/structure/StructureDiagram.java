@@ -47,6 +47,7 @@ import org.tinyuml.draw.NodeChangeListener;
 import org.tinyuml.draw.Selection;
 import org.tinyuml.draw.SimpleLabel;
 import org.tinyuml.model.UmlModel;
+import org.tinyuml.umldraw.shared.NoteElement;
 import org.tinyuml.umldraw.shared.DiagramSelection;
 
 /**
@@ -74,6 +75,24 @@ implements NodeChangeListener, LabelSource, Diagram {
     new ArrayList<LabelChangeListener>();
   private transient Set<NodeChangeListener> nodeChangeListeners =
     new HashSet<NodeChangeListener>();
+
+  /**
+   * Counts the diagram nodes by supported element category.
+   */
+  public static final class ItemCounts {
+    private int packages;
+    private int classes;
+    private int components;
+    private int notes;
+
+    public int getPackages() { return packages; }
+    public int getClasses() { return classes; }
+    public int getComponents() { return components; }
+    public int getNotes() { return notes; }
+    public int getTotal() {
+      return packages + classes + components + notes;
+    }
+  }
 
   /**
    * Writes the instance variables to the stream.
@@ -426,6 +445,43 @@ implements NodeChangeListener, LabelSource, Diagram {
       if (conn.contains(x, y)) return conn;
     }
     return super.getChildAt(x, y);
+  }
+
+  /**
+   * Returns the counts of diagram items, excluding connections.
+   *
+   * @return the item counts grouped by category
+   */
+  public ItemCounts getItemCounts() {
+    ItemCounts result = new ItemCounts();
+    countItems(getChildren(), result);
+    return result;
+  }
+
+  /**
+   * Recursively counts diagram nodes, including nodes nested in packages.
+   *
+   * @param elements elements to inspect
+   * @param counts counts to update
+   */
+  private void countItems(Collection<DiagramElement> elements,
+    ItemCounts counts) {
+    for (DiagramElement element : elements) {
+      if (element instanceof Connection) {
+        continue;
+      } else if (element instanceof PackageElement) {
+        counts.packages++;
+      } else if (element instanceof ClassElement) {
+        counts.classes++;
+      } else if (element instanceof ComponentElement) {
+        counts.components++;
+      } else if (element instanceof NoteElement) {
+        counts.notes++;
+      }
+      if (element instanceof CompositeNode) {
+        countItems(((CompositeNode) element).getChildren(), counts);
+      }
+    }
   }
 
   /**
